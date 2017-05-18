@@ -56,6 +56,9 @@
   register: result
   failed_when: "result.rc == 1 and not 'already exists' in result.stdout"
   changed_when: "result.rc == 0"
+  
+- name: set permissions to keystore file
+  file: path={{ ranger_admin_truststore.path }} owner=ranger group=ranger mode=0400
 
 - name: export keys from truststore to files
   shell: keytool -export -keystore {{ ranger_admin_truststore.path }} -alias {{ item.value.alias }} -file /tmp/{{ item.value.cert_filename }}
