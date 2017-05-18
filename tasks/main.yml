@@ -1,70 +1,70 @@
 ---
 # tasks file for hdp-create-ranger-certs
 
-    - name: install pexpect
-      pip: name=pexpect
+- name: install pexpect
+  pip: name=pexpect
 
-    - name: create key on ranger host
-      expect:
-        command: keytool -genkey -keyalg RSA -alias {{ ranger_admin_keystore.alias }} -keystore {{ ranger_admin_keystore.path }} -storepass {{ ranger_admin_keystore.password }} -validity 360 -keysize 2048
-        responses:
-          "(?i)first and last name": "{{ ranger_admin_keystore.alias }}"
-          "(?i)organizational unit": "PS"
-          "(?i)your organization": "Hortonworks"
-          "(?i)city or locality": "Munich"
-          "(?i)state or province": "Bavaria"
-          "(?i)two-letter country": "de"
-          "(?i)correct?": "yes"
-          "(?i)keystore password": ""
-      register: result
-      failed_when: "result.rc == 1 and not 'already exists' in result.stdout"
-      changed_when: "result.rc == 0"
+- name: create key on ranger host
+  expect:
+    command: keytool -genkey -keyalg RSA -alias {{ ranger_admin_keystore.alias }} -keystore {{ ranger_admin_keystore.path }} -storepass {{ ranger_admin_keystore.password }} -validity 360 -keysize 2048
+    responses:
+      "(?i)first and last name": "{{ ranger_admin_keystore.alias }}"
+      "(?i)organizational unit": "PS"
+      "(?i)your organization": "Hortonworks"
+      "(?i)city or locality": "Munich"
+      "(?i)state or province": "Bavaria"
+      "(?i)two-letter country": "de"
+      "(?i)correct?": "yes"
+      "(?i)keystore password": ""
+  register: result
+  failed_when: "result.rc == 1 and not 'already exists' in result.stdout"
+  changed_when: "result.rc == 0"
 
-    - name: set permissions to keystore file
-      file: path={{ ranger_admin_keystore.path }} owner=ranger group=ranger mode=0400
+- name: set permissions to keystore file
+  file: path={{ ranger_admin_keystore.path }} owner=ranger group=ranger mode=0400
 
-    - name: export key from keystore to file
-      shell: keytool -export -keystore {{ ranger_admin_keystore.path }} -alias {{ ranger_admin_keystore.alias }} -file /tmp/{{ ranger_admin_keystore.cert_filename }}
+- name: export key from keystore to file
+  shell: keytool -export -keystore {{ ranger_admin_keystore.path }} -alias {{ ranger_admin_keystore.alias }} -file /tmp/{{ ranger_admin_keystore.cert_filename }}
 
-    - name: create ssl_certs directory
-      local_action: file path=./ssl_certs state=directory
-      become: no
+- name: create ssl_certs directory
+  local_action: file path=./ssl_certs state=directory
+  become: no
 
-    - name: fetch file
-      fetch: src=/tmp/{{ ranger_admin_keystore.cert_filename }} dest=./ssl_certs/ flat=yes
+- name: fetch file
+  fetch: src=/tmp/{{ ranger_admin_keystore.cert_filename }} dest=./ssl_certs/ flat=yes
 
-    - name: delete file remotely
-      file: path=/tmp/{{ ranger_admin_keystore.cert_filename }} state=absent
+- name: delete file remotely
+  file: path=/tmp/{{ ranger_admin_keystore.cert_filename }} state=absent
 
-    - name: print debug message
-      debug: msg={{ item.key }}
-      with_dict:  "{{ ranger_services }}"
+- name: print debug message
+  debug: msg={{ item.key }}
+  with_dict:  "{{ ranger_services }}"
 
-    - name: create trusted file for each service
-      expect:
-        command: keytool -genkey -keyalg RSA -alias {{ item.value.alias }} -keystore {{ ranger_admin_truststore.path }} -storepass {{ ranger_admin_truststore.password }} -validity 360 -keysize 2048
-        responses:
-          "(?i)first and last name": "{{ item.value.alias }}"
-          "(?i)organizational unit": "PS"
-          "(?i)your organization": "Hortonworks"
-          "(?i)city or locality": "Munich"
-          "(?i)state or province": "Bavaria"
-          "(?i)two-letter country": "de"
-          "(?i)correct?": "yes"
-          "(?i)keystore password": ""
-      with_dict: "{{ ranger_services }}"
-      register: result
-      failed_when: "result.rc == 1 and not 'already exists' in result.stdout"
-      changed_when: "result.rc == 0"
+- name: create trusted file for each service
+  expect:
+    command: keytool -genkey -keyalg RSA -alias {{ item.value.alias }} -keystore {{ ranger_admin_truststore.path }} -storepass {{ ranger_admin_truststore.password }} -validity 360 -keysize 2048
+    responses:
+      "(?i)first and last name": "{{ item.value.alias }}"
+      "(?i)organizational unit": "PS"
+      "(?i)your organization": "Hortonworks"
+      "(?i)city or locality": "Munich"
+      "(?i)state or province": "Bavaria"
+      "(?i)two-letter country": "de"
+      "(?i)correct?": "yes"
+      "(?i)keystore password": ""
+  with_dict: "{{ ranger_services }}"
+  register: result
+  failed_when: "result.rc == 1 and not 'already exists' in result.stdout"
+  changed_when: "result.rc == 0"
 
-    - name: export keys from truststore to files
-      shell: keytool -export -keystore {{ ranger_admin_truststore.path }} -alias {{ item.value.alias }} -file /tmp/{{ item.value.cert_filename }}
-      with_dict: "{{ ranger_services }}"
+- name: export keys from truststore to files
+  shell: keytool -export -keystore {{ ranger_admin_truststore.path }} -alias {{ item.value.alias }} -file /tmp/{{ item.value.cert_filename }}
+  with_dict: "{{ ranger_services }}"
 
-    - name: fetch files
-      fetch: src=/tmp/{{ item.value.cert_filename }} dest=./ssl_certs/ flat=yes
-      with_dict: "{{ ranger_services }}"
+- name: fetch files
+  fetch: src=/tmp/{{ item.value.cert_filename }} dest=./ssl_certs/ flat=yes
+  with_dict: "{{ ranger_services }}"
 
-    - name: delete remote files
-      file: path=/tmp/{{ item.value.cert_filename }} state=absent
-      with_dict: "{{ ranger_services }}"
+- name: delete remote files
+  file: path=/tmp/{{ item.value.cert_filename }} state=absent
+  with_dict: "{{ ranger_services }}"

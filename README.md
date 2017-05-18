@@ -1,4 +1,4 @@
-hdp-create-ranger-certs
+hdp-ranger-create-certs
 =========
 
 An ansible role to create self signed certificates to enable SSL communication
@@ -23,7 +23,7 @@ Example Playbook
 
     - hosts: ranger
       roles:
-         - { role: hdp-create-ranger-certs }
+         - { role: hdp-ranger-create-certs }
 
 License
 -------
