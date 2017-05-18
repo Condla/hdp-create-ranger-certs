@@ -1,7 +1,7 @@
 ---
 # tasks file for hdp-create-ranger-certs
 
-- name: install pexpect
+- name: install pexpect (required for following command)
   pip: name=pexpect
 
 - name: create key on ranger host
